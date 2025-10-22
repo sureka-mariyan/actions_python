@@ -1,12 +1,12 @@
-name: Playwright Python Tests (Manual Trigger)
+name: Playwright Python Tests (Manual Trigger by File)
 
 on:
   workflow_dispatch:
     inputs:
-      marker:
-        description: "Enter pytest marker (e.g., smoke, regression)"
+      test_path:
+        description: "Enter test file or folder to run (e.g., playwright_test/test/test_login.py or playwright_test/test/)"
         required: true
-        default: "api_tests"
+        default: "playwright_test/test/"
 
 jobs:
   test:
@@ -14,33 +14,30 @@ jobs:
     name: Run Selected Playwright Tests
 
     steps:
-      # Step 1: Checkout your repository
+      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Set up Python 3.11
+      # Step 2: Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # Step 3: Install required dependencies
+      # Step 3: Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pytest pytest-html playwright
           python -m playwright install --with-deps
 
-      # Step 4: Run tests (based on marker)
-      - name: Run marked tests
+      # Step 4: Run tests based on provided file/folder path
+      - name: Run tests
         run: |
-          if [ -z "${{ github.event.inputs.marker }}" ]; then
-            pytest --maxfail=1 --disable-warnings -v --html=report.html
-          else
-            pytest -m ${{ github.event.inputs.marker }} --maxfail=1 --disable-warnings -v --html=report.html
-          fi
+          echo "Running tests from path: ${{ github.event.inputs.test_path }}"
+          pytest ${{ github.event.inputs.test_path }} --maxfail=1 --disable-warnings -v --html=report.html
 
-      # Step 5 (Optional): Upload test report as an artifact
+      # Step 5: Upload HTML test report
       - name: Upload HTML Test Report
         uses: actions/upload-artifact@v4
         with:
