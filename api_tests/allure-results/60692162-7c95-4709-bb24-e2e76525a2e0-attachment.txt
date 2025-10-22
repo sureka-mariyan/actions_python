@@ -1,0 +1,1 @@
+PUT Response: {'id': 1, 'title': 'updated', 'body': 'new content', 'userId': 1}
