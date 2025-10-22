@@ -1,28 +1,48 @@
+name: Playwright Python Tests (Manual Trigger)
+
 on:
-    workflow_dispatch:
-      inputs:
-        test_files:
-          description: "Enter pytest marker (e.g., smoke, regression)"
-          required: true
-          default: "api_tests"
+  workflow_dispatch:
+    inputs:
+      marker:
+        description: "Enter pytest marker (e.g., smoke, regression)"
+        required: true
+        default: "api_tests"
+
 jobs:
-    test:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-        - uses: actions/setup-python@v5
-          with:
-            python-version: '3.11'
-  
-        - run: |
-            python -m pip install --upgrade pip
-            python -m playwright install --with-deps
-  
-        - name: Run marked tests
-          run: |
-            if [ -z "${{ github.event.inputs.marker }}" ]; then
-              pytest --maxfail=1 --disable-warnings -v
-            else
-              pytest -m ${{ github.event.inputs.marker }} --maxfail=1 --disable-warnings -v
-            fi
-  
+  test:
+    runs-on: ubuntu-latest
+    name: Run Selected Playwright Tests
+
+    steps:
+      # Step 1: Checkout your repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python 3.11
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Step 3: Install required dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-html playwright
+          python -m playwright install --with-deps
+
+      # Step 4: Run tests (based on marker)
+      - name: Run marked tests
+        run: |
+          if [ -z "${{ github.event.inputs.marker }}" ]; then
+            pytest --maxfail=1 --disable-warnings -v --html=report.html
+          else
+            pytest -m ${{ github.event.inputs.marker }} --maxfail=1 --disable-warnings -v --html=report.html
+          fi
+
+      # Step 5 (Optional): Upload test report as an artifact
+      - name: Upload HTML Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: Playwright-Test-Report
+          path: report.html
